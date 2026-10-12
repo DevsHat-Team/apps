@@ -1,0 +1,37 @@
+{
+  "name": "trackpad-pc",
+  "productName": "Trackpad",
+  "version": "1.0.0",
+  "description": "Trackpad - turn your phone into a barcode scanner for this PC",
+  "main": "main.js",
+  "author": "Trackpad",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node test/bridge.test.js",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
+  },
+  "dependencies": {
+    "@nut-tree-fork/nut-js": "^4.2.6",
+    "qrcode": "^1.5.4",
+    "systeminformation": "^5.33.15",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.trackpad.scan",
+    "productName": "Trackpad",
+    "files": ["main.js", "preload.js", "src/**/*", "renderer/**/*", "build/**/*", "package.json"],
+    "asarUnpack": ["node_modules/@nut-tree-fork/**/*"],
+    "win": { "target": "nsis", "icon": "build/icon.png" },
+    "mac": { "target": "dmg", "icon": "build/icon.png", "category": "public.app-category.productivity" },
+    "linux": { "target": "AppImage", "icon": "build/icon.png", "category": "Utility" },
+    "nsis": { "oneClick": true, "perMachine": false }
+  }
+}

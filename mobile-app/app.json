@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Trackpad",
+    "slug": "trackpad-scanner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0B1020",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.trackpad.scan",
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "Trackpad connects to your PC on the local network to send scanned barcodes.",
+        "NSAppTransportSecurity": { "NSAllowsLocalNetworking": true }
+      }
+    },
+    "android": {
+      "package": "com.trackpad.scan",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B1020",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "plugins": [
+      ["expo-camera", { "cameraPermission": "Trackpad uses the camera to scan barcodes." }],
+      ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]
+    ],
+    "web": { "favicon": "./assets/favicon.png" }
+  }
+}

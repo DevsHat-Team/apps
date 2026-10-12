@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'" />
+  <title>Trackpad</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#22D3EE" />
+            <stop offset="1" stop-color="#6366F1" />
+          </linearGradient>
+        </defs>
+        <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#g)" />
+        <rect x="15" y="17" width="34" height="30" rx="7" fill="none" stroke="#fff" stroke-width="3.5" />
+        <rect x="14" y="30" width="36" height="4" rx="2" fill="#fff" />
+        <circle cx="32" cy="41" r="2.2" fill="#fff" />
+      </svg>
+      <div>
+        <h1>Trackpad</h1>
+        <p>Phone to PC barcode scanner</p>
+      </div>
+    </div>
+    <div id="pill" class="pill off"><span class="dot"></span><span id="pillText">Waiting for phone</span></div>
+  </header>
+
+  <main class="grid">
+    <section class="card connect">
+      <h2>Connect your phone</h2>
+      <p class="muted">Open <b>Trackpad</b> on your phone and point the scanner at this code. Same Wi-Fi required. You only do this once.</p>
+      <div class="qrbox">
+        <img id="qr" alt="Pairing QR code" />
+        <div id="qrLoading" class="qrloading">Starting…</div>
+      </div>
+      <div class="addr" id="addr"></div>
+      <div id="devices" class="devices"></div>
+    </section>
+
+    <section class="stack">
+      <div class="card">
+        <h2>USB barcode scanner</h2>
+        <div id="scannerRow" class="row">
+          <span class="dot grey" id="scannerDot"></span>
+          <div>
+            <div id="scannerTitle" class="strong">No scanner detected</div>
+            <div id="scannerSub" class="muted small">Plug in a USB scanner and it will show up here automatically.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Options</h2>
+        <label class="switch">
+          <input type="checkbox" id="optType" />
+          <span class="track"></span>
+          <span>Type scans into the active window</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="optEnter" />
+          <span class="track"></span>
+          <span>Press Enter after each scan</span>
+        </label>
+        <div id="warn" class="warn hidden"></div>
+      </div>
+
+      <div class="card grow">
+        <div class="cardhead">
+          <h2>Recent scans</h2>
+          <button id="clear" class="link">Clear</button>
+        </div>
+        <ul id="history" class="history"></ul>
+        <div id="empty" class="muted small empty">Scans from your phone or USB scanner will appear here.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
