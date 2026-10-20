@@ -1,7 +1,6 @@
-// Change the brand here and everywhere in the PC app follows.
+// Brand and defaults. Change here and the PC app follows.
 module.exports = {
-  BRAND: "Trackpad",
-  TAGLINE: "Phone to PC barcode scanner",
+  BRAND: "TrackPad",
   DEFAULT_PORT: 5555,
   QR_PREFIX: "TRACKPAD|",
 };

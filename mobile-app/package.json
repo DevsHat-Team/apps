@@ -1,6 +1,6 @@
 {
   "name": "trackpad-mobile",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "index.js",
   "private": true,
   "scripts": {
@@ -16,7 +16,6 @@
     "expo-camera": "~57.0.6",
     "expo-haptics": "~57.0.3",
     "expo-keep-awake": "~57.0.2",
-    "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
     "react-native": "0.86.3"
   }

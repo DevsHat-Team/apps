@@ -1,64 +1,26 @@
-# Trackpad - Phone to PC barcode scanner
+# TrackPad - Phone to PC barcode scanner
 
-Two apps:
+- `pc-app/`     Windows app (Electron). Runs in the background, starts with the PC, types scans into the active window.
+- `mobile-app/` Android app (React Native / Expo). Opens straight into the scanner.
 
-| Folder | What it is | Tech |
-|---|---|---|
-| `pc-app/` | Desktop app (Windows / macOS / Linux). Shows a pairing QR, receives scans and types them into the active window. Also detects USB barcode scanners. | Electron + Node |
-| `mobile-app/` | Phone app (Android + iOS). Opens straight into the scanner. After a scan it shows the result and a **Scan again** button. | React Native (Expo) |
+## Get the installers (no SDK, no npm)
+1. Push this folder to GitHub (the `.github` folder must be included).
+2. Open the repo > **Actions** > **Build Trackpad apps** (runs automatically on every push, or click **Run workflow**).
+3. When both jobs are green, open the run and download from **Artifacts**:
+   - `Trackpad-Android-APK` (arm64 phones, small size)
+   - `Trackpad-Windows-Setup` (double-click to install)
 
-## Easiest: get the APK and the Windows installer automatically (no SDK, no npm)
-
-1. Make a free account at github.com and create a new empty repository.
-2. Upload everything inside this folder (drag and drop in the browser, keep the `.github` folder).
-3. Open the **Actions** tab, choose **Build Trackpad apps**, click **Run workflow**.
-4. After about 10 minutes, open the finished run and download:
-   - **Trackpad-Android-APK** - unzip, send the .apk to your phone, tap to install (allow "install unknown apps").
-   - **Trackpad-Windows-Setup** - unzip, double-click the .exe to install.
-
-## Developer way (needs Node.js)
-
-## 1. PC app
-
-Needs Node.js 20+ (https://nodejs.org).
-
-    cd pc-app
-    npm install
-    npm start
-
-To make an installer (.exe / .dmg / AppImage): `npm run build` (output in `pc-app/dist`).
-
-First run: allow Trackpad through the firewall when Windows asks (Private networks).
-macOS: allow Trackpad in System Settings > Privacy & Security > Accessibility (needed to type).
-Linux: works on X11; Wayland blocks typing into other apps.
-
-## 2. Mobile app
-
-    cd mobile-app
-    npm install
-    npx expo start
-
-Scan the terminal QR with **Expo Go** on your phone to test right away.
-
-Install a real app on Android (APK):
-
-    npx eas-cli login          # free Expo account
-    npx eas-cli build -p android --profile preview
-
-You get a download link to the .apk. iOS: `npx eas-cli build -p ios` (needs an Apple developer account).
-
-## 3. Use it
-
-1. Phone and PC on the same Wi-Fi/LAN.
-2. Start Trackpad on the PC - a QR code appears.
-3. Open Trackpad on the phone, point the scanner at the PC QR. Connected - remembered forever.
-4. Click into any program on the PC (Excel, POS, browser...) and scan. The code is typed + Enter.
-5. Phone shows the code and "Sent to PC". Tap **Scan again** for the next one.
-
-USB scanners: just plug in. Trackpad shows "USB scanner connected" and the scanner types into the active window as usual.
+## First use
+1. Install TrackPad on the PC. It starts automatically and shows a QR code.
+2. Open TrackPad on the phone, scan the PC QR once. The dot turns green.
+3. Done. The PC app now runs in the background and starts with Windows. Open the phone app any time, scan, and it types into the active PC window. No QR needed again.
 
 ## Notes
-- Rename the brand in `pc-app/src/config.js` (and `name` in `mobile-app/app.json`).
-- If the PC gets a new IP the phone reconnects automatically; if not, scan the PC QR again.
-- Traffic stays inside your local network and is protected by a secret key in the QR code.
-- Options on the PC: turn typing off, or turn off the Enter key after each scan.
+- Phone and PC must be on the same Wi-Fi/LAN.
+- If the router gives the PC a new IP, the phone finds it automatically.
+- To quit the PC app fully: tray icon (bottom right) > Quit.
+- Brand text: `pc-app/src/config.js`, `mobile-app/app.json`. Logo files: `pc-app/renderer/logo.png`, `mobile-app/assets/`.
+
+## Developer commands
+    cd pc-app && npm install && npm start
+    cd mobile-app && npm install && npx expo start

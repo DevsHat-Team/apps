@@ -1,33 +1,66 @@
 {
   "expo": {
-    "name": "Trackpad",
+    "name": "TrackPad",
     "slug": "trackpad-scanner",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#0B1020",
+    "backgroundColor": "#05070D",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.trackpad.scan",
       "infoPlist": {
-        "NSLocalNetworkUsageDescription": "Trackpad connects to your PC on the local network to send scanned barcodes.",
-        "NSAppTransportSecurity": { "NSAllowsLocalNetworking": true }
+        "NSLocalNetworkUsageDescription": "TrackPad connects to your PC on the local network to send scanned barcodes.",
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
       }
     },
     "android": {
       "package": "com.trackpad.scan",
       "adaptiveIcon": {
-        "backgroundColor": "#0B1020",
+        "backgroundColor": "#05070D",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
     },
     "plugins": [
-      ["expo-camera", { "cameraPermission": "Trackpad uses the camera to scan barcodes." }],
-      ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "TrackPad uses the camera to scan barcodes.",
+          "recordAudioAndroid": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "buildArchs": [
+              "arm64-v8a"
+            ],
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ],
-    "web": { "favicon": "./assets/favicon.png" }
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#05070D"
+    }
   }
 }
