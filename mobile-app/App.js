@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator, Animated, AppState, Image, Linking, Platform, Pressable, ScrollView,
   StatusBar, StyleSheet, Text, View, useWindowDimensions,
@@ -14,6 +14,7 @@ import { Activity } from './src/Activity';
 import { AddStockSheet } from './src/AddStockSheet';
 import { Menu, GUARDS } from './src/Menu';
 import { Setup } from './src/Setup';
+import { TakerPicker } from './src/TakerPicker';
 import { feedback, setSound } from './src/feedback';
 import { C, TYPES } from './src/theme';
 
@@ -57,6 +58,12 @@ function Main() {
   const setMode = useCallback((m) => { modeRef.current = m; setModeState(m); seen.current.clear(); }, []);
   const [setup, setSetup] = useState(false);
   const [menu, setMenu] = useState(false);
+  // "Stock out for": Office (null) or a clinic person. Chosen once; every Stock Out scan goes in their name.
+  const [takerId, setTakerIdState] = useState(null);
+  const [picker, setPicker] = useState(false);
+  const takerObj = takerId ? stock.takers.find((t) => t.id === takerId) || null : null;
+  const takerRef = useRef(null);
+  takerRef.current = takerObj;
   const [adding, setAdding] = useState(null);
   const [guard, setGuard] = useState(500);
   const guardRef = useRef(500);
@@ -84,10 +91,14 @@ function Main() {
       const p = raw ? JSON.parse(raw) : {};
       if (GUARDS.includes(p.guard)) { setGuard(p.guard); guardRef.current = p.guard; }
       if (typeof p.sound === 'boolean') setSoundState(p.sound);
+      if (typeof p.taker === 'string') setTakerIdState(p.taker);
       setSound(p.sound !== false);
     }).catch(() => setSound(true));
   }, []);
-  const savePrefs = (p) => AsyncStorage.setItem(PREFS, JSON.stringify({ guard: guardRef.current, sound, ...p })).catch(() => {});
+  const takerSaved = useRef(null);
+  takerSaved.current = takerId;
+  const savePrefs = (p) => AsyncStorage.setItem(PREFS, JSON.stringify({ guard: guardRef.current, sound, taker: takerSaved.current, ...p })).catch(() => {});
+  const pickTaker = (id) => { feedback('select'); setTakerIdState(id); takerSaved.current = id; savePrefs({ taker: id }); setPicker(false); seen.current.clear(); touch(); };
   const changeGuard = (g) => { setGuard(g); guardRef.current = g; savePrefs({ guard: g }); };
   const changeSound = (v) => { setSoundState(v); setSound(v); savePrefs({ sound: v }); };
 
@@ -158,7 +169,7 @@ function Main() {
     }
     feedback('ok');
     if (m === 'NEW') { setAdding({ key: Date.now(), productId: found.productId, batchId: found.batchId }); return; }
-    stock.book(found, m);
+    stock.book(found, m, m === 'OUT' ? takerRef.current : null);
   }, []);
 
   // One label = one count, also when the camera sees it 10 times a second. A label counts again when
@@ -350,11 +361,19 @@ function Main() {
         {modes.map((x) => {
           const on = x.m === mode;
           return (
-            <Pressable key={x.m} onPress={() => { if (!on) { feedback('select'); setMode(x.m); setResult(null); try { cam.current?.resumePreview(); } catch {} } touch(); }}
+            <Fragment key={x.m}>
+            <Pressable onPress={() => { if (!on) { feedback('select'); setMode(x.m); setResult(null); try { cam.current?.resumePreview(); } catch {} } touch(); }}
               style={[s.chip, on && { backgroundColor: x.color + '2A', borderColor: x.color }]} accessibilityState={{ selected: on }}>
               <View style={[s.chipDot, { backgroundColor: x.color }]} />
               <Text style={[s.chipText, on && { color: '#fff' }]}>{x.label}</Text>
             </Pressable>
+            {x.m === 'OUT' && on && !!session && stock.takers.length > 0 && (
+              <Pressable onPress={() => { setPicker(true); touch(); }} accessibilityLabel="Stock out for"
+                style={[s.chip, takerObj ? { backgroundColor: C.violet + '2A', borderColor: C.violet } : { borderStyle: 'dashed' }]}>
+                <Text style={[s.chipText, takerObj && { color: '#fff' }]} numberOfLines={1}>{`For: ${takerObj ? takerObj.name : 'Office'} ▾`}</Text>
+              </Pressable>
+            )}
+            </Fragment>
           );
         })}
         {!session && (
@@ -368,7 +387,7 @@ function Main() {
       {!pcMode && (
         <>
           <View style={[s.strip, { top: stripY, left: 14, right: 14 }]} pointerEvents="none">
-            <Strip flash={flash} dup={showDup} mode={cur} pending={stock.pending} admin={admin} />
+            <Strip flash={flash} dup={showDup} mode={cur} pending={stock.pending} admin={admin} taker={mode === 'OUT' && takerObj ? takerObj.name : null} />
           </View>
           <View style={[s.panel, { top: panelTop, paddingBottom: insets.bottom }]}>
             {session ? (
@@ -403,6 +422,8 @@ function Main() {
           onDone={(r, productId) => stock.added(r, productId)} />
       )}
 
+      {picker && <TakerPicker takers={stock.takers} value={takerObj ? takerObj.id : null} onPick={pickTaker} onClose={() => { setPicker(false); touch(); }} />}
+
       {menu && (
         <Menu session={session} net={stock.net} guard={guard} onGuard={changeGuard} sound={sound} onSound={changeSound}
           pc={pc} pcStatus={status} onReconnectPC={reconnect} onForgetPC={forget}
@@ -414,7 +435,7 @@ function Main() {
 }
 
 /** −1 · item · Stock Out · batch — the answer to the last scan, always the same height so nothing jumps */
-function Strip({ flash, dup, mode, pending, admin }) {
+function Strip({ flash, dup, mode, pending, admin, taker }) {
   if (dup) {
     return (
       <View style={[s.stripBox, { borderColor: 'rgba(255,181,71,0.55)' }]}>
@@ -426,7 +447,7 @@ function Strip({ flash, dup, mode, pending, admin }) {
   if (!flash) {
     return (
       <View style={[s.stripBox, s.stripIdle]}>
-        <Text style={s.stripIdleText} numberOfLines={1}>{pending ? `Saving ${pending}…` : `Ready · ${mode.label}`}</Text>
+        <Text style={s.stripIdleText} numberOfLines={1}>{pending ? `Saving ${pending}…` : `Ready · ${mode.label}${taker ? ` for ${taker}` : ''}`}</Text>
       </View>
     );
   }
@@ -437,7 +458,7 @@ function Strip({ flash, dup, mode, pending, admin }) {
     ? flash.msg
     : flash.undone
       ? flash.msg
-      : `${t.label} · ${flash.adjusted || flash.batchNo || ''}${flash.state === 'saving' ? ' · saving…' : admin && typeof flash.left === 'number' ? ` · ${flash.left} left` : ' · saved'}${flash.low ? ' · low stock' : ''}${pending > 1 ? ` · ${pending - 1} more saving` : ''}`;
+      : `${t.label}${flash.taker ? ` for ${flash.taker}` : ''} · ${flash.adjusted || flash.batchNo || ''}${flash.state === 'saving' ? ' · saving…' : admin && typeof flash.left === 'number' ? ` · ${flash.left} left` : ' · saved'}${flash.low ? ' · low stock' : ''}${pending > 1 ? ` · ${pending - 1} more saving` : ''}`;
   return (
     <View style={[s.stripBox, { borderColor: color + '88', backgroundColor: 'rgba(10,15,26,0.92)' }]}>
       <View style={s.stripRow}>

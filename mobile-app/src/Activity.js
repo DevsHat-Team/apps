@@ -71,7 +71,7 @@ function Row({ r, canUndo, onUndo, onRetry, onDismiss, admin }) {
             ? r.empty
               ? `Stock 0 · nothing left in batch ${r.via.replace(/^Scan · /, '')}, not taken out${r.count > 1 ? ` (${r.count} scans)` : ''}`
               : `${r.count > 1 ? `${r.count} not saved · ` : ''}${newest.error || 'Not saved'}`
-            : `${what} · ${r.via.replace(/^(Scan|New units|New stock) · /, '')}${left}${check ? '  ·  check: more than 1 this minute' : ''}`}
+            : <>{!!r.taker && <Text style={s.who}>For {r.taker} · </Text>}{`${what} · ${r.via.replace(/^(Scan|New units|New stock) · /, '')}${left}${check ? '  ·  check: more than 1 this minute' : ''}`}</>}
         </Text>
       </View>
       {saving ? (
@@ -109,6 +109,7 @@ const s = StyleSheet.create({
   countText: { fontSize: 18, fontWeight: '800' },
   name: { color: C.text, fontSize: 15, fontWeight: '700' },
   via: { color: C.muted, fontSize: 12, marginTop: 2, lineHeight: 16 },
+  who: { color: C.violet, fontWeight: '800' },
   act: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   actText: { color: C.sub, fontSize: 15, fontWeight: '800' },
 });

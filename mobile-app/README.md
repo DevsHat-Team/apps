@@ -1,4 +1,10 @@
-# TrackPad Mobile 1.2.3
+# TrackPad Go 1.3.0
+
+## 1.3.0 mein naya
+
+- **Naya naam aur icon:** phone par app ab **TrackPad Go** — halka neela (cyan) icon, beech mein laal scan line. Website wali installed app (gehra icon) se alag pehchan.
+- **Stock Out kis ke liye:** Stock Out chunte hi saath mein **For: Office ▾** — tap karo aur **Dr Ibrahim Clinic** ka banda chuno (Wahab, Faiz, Noman, Riaz). Phir har scan usi ke naam par ("Stock Out for Wahab"), jab tak badlo nahi. App band kar ke kholne par bhi wahi rehta hai. Office = normal stock out.
+- Website **16.21** ya naya chahiye (purani website par For wala button nazar nahi aata, baqi sab pehle jaisa).
 
 ## 1.2.1 – 1.2.3 mein theek kiya
 
@@ -39,7 +45,7 @@ npx eas-cli login          # apna Expo account
 npm run build:apk          # = npx eas-cli build -p android --profile preview
 ```
 
-Build ke aakhir mein EAS ek link deta hai — APK download karke phone par install karo (purani app ke upar install ho jati hai, versionCode 5). Phir website ke setup guide (`app/(app)/settings/guide/page.tsx`, `APPS.mobile.url`) mein naya Google Drive link laga do.
+Build ke aakhir mein EAS ek link deta hai — APK download karke phone par install karo (purani app ke upar install ho jati hai, versionCode 6). Phir website ke setup guide (`app/(app)/settings/guide/page.tsx`, `APPS.mobile.url`) mein naya Google Drive link laga do.
 
 ## Files
 

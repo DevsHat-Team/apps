@@ -75,6 +75,11 @@ export function useStock({ api, session }) {
   const patch = useCallback((key, p) => setEntries((x) => x.map((e) => (e.key === key ? { ...e, ...(typeof p === 'function' ? p(e) : p) } : e))), [setEntries]);
 
   const [flash, setFlash] = useState(null); // the big strip under the scan window
+  // "Stock out for" people (Dr Ibrahim Clinic · Wahab …) from the website; empty on an older website
+  const [takers, setTakers] = useState([]);
+  const loadTakers = useCallback(async () => {
+    try { const r = await api('GET', '/api/takers', undefined, 15000); setTakers(Array.isArray(r.takers) ? r.takers : []); } catch (e) { if (e && e.status === 404) setTakers([]); }
+  }, [api]);
   const [net, setNet] = useState('ok'); // 'ok' | 'retrying' | 'offline'
   const cleared = useRef(0);
 
@@ -144,16 +149,17 @@ export function useStock({ api, session }) {
     resendBusy.current = false;
   }, [queue]);
 
-  /** one scan = one unit, saved at once */
-  const book = useCallback((found, type) => {
+  /** one scan = one unit, saved at once. taker: { id, name } for a Stock Out for someone (null = Office) */
+  const book = useCallback((found, type, taker) => {
     const key = newId();
+    const who = type === 'OUT' && taker ? taker : null;
     const entry = {
       key, ids: [], type, qty: 1, at: Date.now(), name: found.name, productId: found.productId, batchId: found.batchId,
-      via: `Scan · ${found.batchNo}`, state: 'saving', error: '', retry: false, left: null,
-      req: { batchId: found.batchId, type, quantity: 1, note: null, clientId: key },
+      via: `Scan · ${found.batchNo}`, state: 'saving', error: '', retry: false, left: null, taker: who ? who.name : null,
+      req: { batchId: found.batchId, type, quantity: 1, note: null, clientId: key, ...(who ? { takerId: who.id } : {}) },
     };
     setEntries((x) => [entry, ...x]);
-    setFlash({ key: Date.now(), entry: key, name: found.name, batchNo: found.batchNo, type, state: 'saving' });
+    setFlash({ key: Date.now(), entry: key, name: found.name, batchNo: found.batchNo, type, state: 'saving', taker: who ? who.name : null });
     saveQueue();
     queue(key).then((ok) => { if (ok) resendFailed(); });
     return key;
@@ -194,7 +200,7 @@ export function useStock({ api, session }) {
     setLoadingList(true);
     try {
       const r = await api('GET', '/api/movements/mine', undefined, 20000);
-      const server = (r.items || []).map((m) => ({ key: m.id, ids: [m.id], type: m.type, qty: m.qty, at: m.at, name: m.name, productId: m.productId, batchId: m.batchId, via: m.via, state: 'ok', received: !!m.received, left: typeof m.left === 'number' ? m.left : null }));
+      const server = (r.items || []).map((m) => ({ key: m.id, ids: [m.id], type: m.type, qty: m.qty, at: m.at, name: m.name, productId: m.productId, batchId: m.batchId, via: m.via, state: 'ok', received: !!m.received, left: typeof m.left === 'number' ? m.left : null, taker: m.taker || null }));
       const have = new Set(server.map((m) => m.key));
       setEntries((old) => {
         // saved entries come from the server (an entry undone on the website disappears here too);
@@ -222,7 +228,7 @@ export function useStock({ api, session }) {
 
   // ---------- start, coming back to the app, every 2 minutes ----------
   useEffect(() => {
-    if (!session) { setEntries([]); index.current = new Map(); return; }
+    if (!session) { setEntries([]); index.current = new Map(); setTakers([]); return; }
     let alive = true;
     (async () => {
       cleared.current = 0; // the list always shows the full 24 hours (no Clear button on the phone)
@@ -234,13 +240,14 @@ export function useStock({ api, session }) {
       } catch {}
       if (!alive) return;
       loadIndex();
+      loadTakers();
       await refresh();
       resendFailed();
     })();
     const t = setInterval(() => { if (AppState.currentState === 'active') loadIndex(); }, 120_000);
     const sub = AppState.addEventListener('change', (s) => {
       if (s !== 'active') return;
-      if (Date.now() - indexAt.current > 30_000) loadIndex();
+      if (Date.now() - indexAt.current > 30_000) { loadIndex(); loadTakers(); }
       refresh().then(resendFailed);
     });
     return () => { alive = false; clearInterval(t); sub.remove(); clearTimeout(idxTimer.current); };
@@ -258,9 +265,9 @@ export function useStock({ api, session }) {
       let blk = byMin.get(m);
       if (!blk) { blk = { minute: m, units: 0, rows: [], map: new Map() }; byMin.set(m, blk); minutes.push(blk); }
       const failed = e.state === 'failed';
-      const gk = [e.productId, e.type, e.added ? 'a' : e.received ? 'r' : '', e.via, failed ? (e.empty ? 'e' : e.retry ? 'n' : 'f') : ''].join('|');
+      const gk = [e.productId, e.type, e.added ? 'a' : e.received ? 'r' : '', e.via, e.taker || '', failed ? (e.empty ? 'e' : e.retry ? 'n' : 'f') : ''].join('|');
       let row = blk.map.get(gk);
-      if (!row) { row = { key: `${m}|${gk}`, name: e.name, type: e.type, via: e.via, added: !!e.added, received: !!e.received, failed, empty: failed && !!e.empty, count: 0, items: [] }; blk.map.set(gk, row); blk.rows.push(row); }
+      if (!row) { row = { key: `${m}|${gk}`, name: e.name, type: e.type, via: e.via, taker: e.taker || null, added: !!e.added, received: !!e.received, failed, empty: failed && !!e.empty, count: 0, items: [] }; blk.map.set(gk, row); blk.rows.push(row); }
       row.count += e.qty;
       row.items.push(e);
       if (row.left == null) row.left = stockNow.get(e.productId) ?? (typeof e.left === 'number' ? e.left : null);
@@ -274,5 +281,5 @@ export function useStock({ api, session }) {
   const unsent = entries.filter((e) => e.state === 'failed' && e.retry).length;
   const dismissFailed = useCallback((key) => { setEntries((x) => x.filter((e) => e.key !== key)); saveQueue(); }, [setEntries, saveQueue]);
 
-  return { find, book, undo, canUndo, retry, added, refresh, clearList, dismissFailed, groups, entries, pending, unsent, flash, setFlash, net, loadingList, admin };
+  return { takers, loadTakers, find, book, undo, canUndo, retry, added, refresh, clearList, dismissFailed, groups, entries, pending, unsent, flash, setFlash, net, loadingList, admin };
 }

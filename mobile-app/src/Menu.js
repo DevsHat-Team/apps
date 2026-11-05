@@ -4,7 +4,7 @@ import { C } from './theme';
 import { hostOf } from './server';
 
 export const GUARDS = [500, 750, 1000, 2000];
-const VERSION = '1.2.3';
+const VERSION = '1.3.0';
 
 /** ⋯ : the account, the same-label wait, sound, the PC, sign out */
 export function Menu({ session, net, guard, onGuard, sound, onSound, pc, pcStatus, onPairPC, onForgetPC, onReconnectPC, onSignIn, onSignOut, onClose }) {
@@ -75,7 +75,7 @@ export function Menu({ session, net, guard, onGuard, sound, onSound, pc, pcStatu
                 {pc && <Pressable style={s.small} onPress={confirmForget}><Text style={[s.smallText, { color: C.red }]}>Forget PC</Text></Pressable>}
               </View>
             </View>
-            <Text style={s.version}>TrackPad Mobile {VERSION}</Text>
+            <Text style={s.version}>TrackPad Go {VERSION}</Text>
           </ScrollView>
         </View>
       </View>
