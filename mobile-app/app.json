@@ -2,7 +2,7 @@
   "expo": {
     "name": "TrackPad",
     "slug": "trackpad-scanner",
-    "version": "1.1.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -11,7 +11,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.trackpad.scan",
       "infoPlist": {
-        "NSLocalNetworkUsageDescription": "TrackPad connects to your PC on the local network to send scanned barcodes.",
+        "NSLocalNetworkUsageDescription": "TrackPad connects to your PC or your TrackPad website on the local network.",
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
         }
@@ -28,8 +28,11 @@
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.SYSTEM_ALERT_WINDOW"
-      ]
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ],
+      "versionCode": 3
     },
     "plugins": [
       [
@@ -40,6 +43,16 @@
           "microphonePermission": false
         }
       ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
+        }
+      ],
+      "expo-secure-store",
       [
         "expo-build-properties",
         {
