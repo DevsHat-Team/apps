@@ -21,18 +21,17 @@ function minuteLabel(minute) {
  * Recent activity of this account (last 24 hours): one block per minute, one row per item and action with a count.
  * More than 1 of the same item in a minute is marked, so a double scan is easy to spot; ↺ takes back the last one.
  */
-export const Activity = memo(function Activity({ groups, canUndo, onUndo, onRetry, onDismiss, onRefresh, loading, admin, expanded, onToggle, unsent }) {
+export const Activity = memo(function Activity({ groups, canUndo, onUndo, onRetry, onDismiss, onRefresh, loading, admin, unsent }) {
   return (
     <View style={{ flex: 1 }}>
-      <Pressable onPress={onToggle} style={s.head} hitSlop={6} accessibilityRole="button" accessibilityLabel={expanded ? 'Make the list smaller' : 'Make the list bigger'}>
-        <View style={s.grip} />
+      <View style={s.head}>
         <View style={s.headRow}>
           <Text style={s.title}>Recent activity</Text>
-          <Text style={s.sub} numberOfLines={1}>{expanded ? 'scanning paused · tap to scan' : `last 24 hours${admin ? '' : ' (yours)'}`}</Text>
+          <Text style={s.sub} numberOfLines={1}>{`last 24 hours${admin ? '' : ' (yours)'}`}</Text>
           <View style={{ flex: 1 }} />
           {!!unsent && <Text style={[s.badge, { color: C.amber, borderColor: 'rgba(255,181,71,0.5)' }]}>{unsent} not sent</Text>}
         </View>
-      </Pressable>
+      </View>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 12 }}
         refreshControl={<RefreshControl refreshing={!!loading} onRefresh={onRefresh} tintColor={C.cyan} colors={[C.cyan]} progressBackgroundColor={C.panel2} />}>
         {groups.length === 0 && (
@@ -57,7 +56,7 @@ function Row({ r, canUndo, onUndo, onRetry, onDismiss, admin }) {
   const check = !r.failed && !r.added && !r.received && r.count > 1; // more than one of the same item in a minute: check it was meant
   const color = r.failed ? C.red : r.added ? C.cyan : t.color;
   const what = r.added ? 'New stock' : r.received ? 'New units' : t.label;
-  const left = admin && newest && typeof newest.left === 'number' ? ` · ${newest.left} left` : '';
+  const left = admin && typeof r.left === 'number' ? ` · ${r.left} left` : '';
   return (
     <View style={[s.row, check && s.rowCheck, r.failed && s.rowFail]}>
       <View style={[s.count, { borderColor: color + '66', backgroundColor: color + '1A' }]}>
@@ -93,7 +92,7 @@ function Row({ r, canUndo, onUndo, onRetry, onDismiss, admin }) {
 }
 
 const s = StyleSheet.create({
-  head: { paddingTop: 8, paddingBottom: 10, paddingHorizontal: 16 },
+  head: { paddingTop: 14, paddingBottom: 10, paddingHorizontal: 16 },
   grip: { alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: 'rgba(143,155,194,0.4)', marginBottom: 10 },
   headRow: { flexDirection: 'row', alignItems: 'center' },
   title: { color: C.text, fontSize: 16, fontWeight: '800' },

@@ -1,4 +1,4 @@
-name: Build Trackpad apps
+name: Build TrackPad apps
 on:
   workflow_dispatch: {}
   push:
@@ -6,12 +6,12 @@ on:
 
 jobs:
   android-apk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with: { node-version: 22 }
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: 17 }
       - name: Build APK
         working-directory: mobile-app
@@ -19,23 +19,23 @@ jobs:
           npm ci
           npx expo prebuild --platform android --no-install
           cd android && chmod +x gradlew && ./gradlew assembleRelease --no-daemon
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
-          name: Trackpad-Android-APK
+          name: TrackPad-Android-APK
           path: mobile-app/android/app/build/outputs/apk/release/*.apk
 
   windows-exe:
-    runs-on: windows-latest
+    runs-on: windows-2025
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with: { node-version: 22 }
       - name: Build installer
         working-directory: pc-app
         run: |
           npm ci
           npx electron-builder --win --publish never
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
-          name: Trackpad-Windows-Setup
+          name: TrackPad-Windows-Setup
           path: pc-app/dist/*.exe

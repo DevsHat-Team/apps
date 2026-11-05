@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Animated, AppState, Image, LayoutAnimation, Linking, Platform, Pressable, ScrollView,
-  StatusBar, StyleSheet, Text, UIManager, View, useWindowDimensions,
+  ActivityIndicator, Animated, AppState, Image, Linking, Platform, Pressable, ScrollView,
+  StatusBar, StyleSheet, Text, View, useWindowDimensions,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
@@ -17,7 +17,6 @@ import { Setup } from './src/Setup';
 import { feedback, setSound } from './src/feedback';
 import { C, TYPES } from './src/theme';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) UIManager.setLayoutAnimationEnabledExperimental(true);
 
 // Fewer formats = faster decoding and a cooler phone. Covers TrackPad labels (Code 128), shop barcodes and QR.
 const FORMATS = ['qr', 'ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39', 'itf14'];
@@ -59,7 +58,6 @@ function Main() {
   const [setup, setSetup] = useState(false);
   const [menu, setMenu] = useState(false);
   const [adding, setAdding] = useState(null);
-  const [expanded, setExpanded] = useState(false);
   const [guard, setGuard] = useState(500);
   const guardRef = useRef(500);
   const [sound, setSoundState] = useState(true);
@@ -272,10 +270,10 @@ function Main() {
   const barsH = 56 + 50; // top bar + mode chips
   const winY = pcMode ? Math.round(height * 0.38 - winH / 2) : Math.round(top + barsH + 18);
   const stripY = winY + winH + 40;
-  const panelTop = expanded ? top + barsH + 6 : stripY + 76;
+  const panelTop = stripY + 76; // the list always stays in the same place (no moving panel)
   const done = !!result;
   const sheetOpen = done || !!adding || menu;
-  const scanning = awake && !sheetOpen && !(expanded && !pcMode);
+  const scanning = awake && !sheetOpen;
   scanningRef.current = scanning;
   const bracket = done ? C.green : pcMode ? C.cyan : cur.color;
   const dot = pcMode ? (status === 'connected' ? C.green : status === 'connecting' ? C.amber : C.red)
@@ -290,11 +288,6 @@ function Main() {
 
   const showDup = !pcMode && Date.now() - dupAt < 1600 && (!flash || flash.state !== 'failed') && (!flash || Date.now() - flash.key > 1200);
 
-  const toggleList = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.create(220, 'easeInEaseOut', 'opacity'));
-    setExpanded((v) => !v);
-    touch();
-  };
 
   return (
     <View style={s.root}>
@@ -357,7 +350,7 @@ function Main() {
         {modes.map((x) => {
           const on = x.m === mode;
           return (
-            <Pressable key={x.m} onPress={() => { if (!on) { feedback('select'); setMode(x.m); setResult(null); setExpanded(false); try { cam.current?.resumePreview(); } catch {} } touch(); }}
+            <Pressable key={x.m} onPress={() => { if (!on) { feedback('select'); setMode(x.m); setResult(null); try { cam.current?.resumePreview(); } catch {} } touch(); }}
               style={[s.chip, on && { backgroundColor: x.color + '2A', borderColor: x.color }]} accessibilityState={{ selected: on }}>
               <View style={[s.chipDot, { backgroundColor: x.color }]} />
               <Text style={[s.chipText, on && { color: '#fff' }]}>{x.label}</Text>
@@ -374,15 +367,13 @@ function Main() {
       {/* stock modes: the result of the last scan, then the recent activity */}
       {!pcMode && (
         <>
-          {!expanded && (
-            <View style={[s.strip, { top: stripY, left: 14, right: 14 }]} pointerEvents="none">
-              <Strip flash={flash} dup={showDup} mode={cur} pending={stock.pending} admin={admin} />
-            </View>
-          )}
+          <View style={[s.strip, { top: stripY, left: 14, right: 14 }]} pointerEvents="none">
+            <Strip flash={flash} dup={showDup} mode={cur} pending={stock.pending} admin={admin} />
+          </View>
           <View style={[s.panel, { top: panelTop, paddingBottom: insets.bottom }]}>
             {session ? (
               <Activity groups={stock.groups} canUndo={stock.canUndo} onUndo={(e) => { stock.undo(e); touch(); }} onRetry={stock.retry} onDismiss={stock.dismissFailed}
-                onRefresh={stock.refresh} loading={stock.loadingList} admin={admin} expanded={expanded} onToggle={toggleList} unsent={stock.unsent} />
+                onRefresh={stock.refresh} loading={stock.loadingList} admin={admin} unsent={stock.unsent} />
             ) : (
               <View style={{ padding: 22 }}>
                 <Text style={s.h2}>Save stock from this phone</Text>

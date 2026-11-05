@@ -27,12 +27,20 @@ export function useStock({ api, session }) {
   // ---------- label list ----------
   const index = useRef(new Map());
   const indexAt = useRef(0);
+  // admin: each item's stock now (all its batches), from the label list — so every row shows "N left",
+  // also after the app was closed and opened again
+  const [stockNow, setStockNow] = useState(() => new Map());
   const loadIndex = useCallback(async () => {
     try {
       const r = await api('GET', '/api/scan-index', undefined, 30000);
       const m = new Map();
       for (const it of r.items || []) m.set(it[0], it);
       index.current = m;
+      if (r.admin) {
+        const t = new Map();
+        for (const it of r.items || []) if (typeof it[6] === 'number') t.set(it[3], (t.get(it[3]) || 0) + it[6]);
+        setStockNow(t);
+      }
       indexAt.current = Date.now();
     } catch {}
   }, [api]);
@@ -91,7 +99,7 @@ export function useStock({ api, session }) {
         const via = r.adjusted ? `Scan · ${r.adjusted}` : e0.via;
         patch(key, { state: 'ok', ids: r.ids || [], via, left: admin && typeof r.productStock === 'number' ? r.productStock : null, req: null });
         // the item's other rows show the same stock now
-        if (admin && typeof r.productStock === 'number') setEntries((x) => x.map((y) => (y.productId === e0.productId && y.key !== key ? { ...y, left: r.productStock } : y)));
+        if (admin && typeof r.productStock === 'number') setStockNow((m) => new Map(m).set(e0.productId, r.productStock));
         setFlash((f) => (f && f.entry === key ? { ...f, state: 'ok', left: admin ? r.productStock : null, low: admin && r.low ? r.threshold : null, adjusted: r.adjusted || null } : f));
         loadIndexSoon();
         return true;
@@ -115,7 +123,7 @@ export function useStock({ api, session }) {
         saveQueue();
       }
     }
-  }, [api, patch, admin, loadIndexSoon, saveQueue, setEntries]);
+  }, [api, patch, admin, loadIndexSoon, saveQueue]);
 
   const queue = useCallback((key) => {
     chain.current = chain.current.then(() => sendOne(key)).catch(() => {});
@@ -161,6 +169,7 @@ export function useStock({ api, session }) {
     try {
       const r = await api('POST', '/api/movements/undo', { ids: e.ids });
       setEntries((x) => x.filter((y) => y.key !== e.key));
+      if (admin && typeof r.productStock === 'number') setStockNow((m) => new Map(m).set(e.productId, r.productStock));
       const what = `${e.qty} × ${e.name}`;
       setFlash({ key: Date.now(), undone: true, name: e.name, type: e.type, state: 'ok', msg: admin && typeof r.productStock === 'number' ? `Undone: ${what}. Stock is ${r.productStock} again.` : `Undone: ${what}.` });
       feedback('warn');
@@ -174,6 +183,7 @@ export function useStock({ api, session }) {
 
   /** Add new stock (admin) was saved: listed here (not undone from the phone: fix it on the website if needed) */
   const added = useCallback((r, productId) => {
+    if (typeof r.after === 'number') setStockNow((m) => new Map(m).set(productId, r.after));
     setEntries((x) => [{ key: newId(), ids: [], type: 'IN', qty: r.qty, at: Date.now(), name: r.productName, productId, batchId: r.batch.id, via: `New stock · ${r.batch.batchNo}`, state: 'ok', added: true, left: r.after }, ...x]);
     loadIndexSoon();
   }, [setEntries, loadIndexSoon]);
@@ -253,11 +263,12 @@ export function useStock({ api, session }) {
       if (!row) { row = { key: `${m}|${gk}`, name: e.name, type: e.type, via: e.via, added: !!e.added, received: !!e.received, failed, empty: failed && !!e.empty, count: 0, items: [] }; blk.map.set(gk, row); blk.rows.push(row); }
       row.count += e.qty;
       row.items.push(e);
+      if (row.left == null) row.left = stockNow.get(e.productId) ?? (typeof e.left === 'number' ? e.left : null);
       if (!failed) blk.units += e.qty;
     }
     minutes.sort((a, b) => b.minute - a.minute);
     return minutes;
-  }, [entries]);
+  }, [entries, stockNow]);
 
   const pending = entries.filter((e) => e.state === 'saving').length;
   const unsent = entries.filter((e) => e.state === 'failed' && e.retry).length;

@@ -22,8 +22,8 @@ function load() {
       pools[k] = { i: 0, list: [0, 1, 2].map(() => {
         const p = createAudioPlayer(SOURCES[k]);
         p.volume = 1;
-        // rewind when done, so the next play starts at once from the beginning
-        try { p.addListener('playbackStatusUpdate', (s) => { if (s && s.didJustFinish) p.seekTo(0).catch(() => {}); }); } catch {}
+        // No rewind-on-finish listener: on Android a rewind after the end starts the sound again, which made the beep
+        // repeat without stopping. Each play below stops, rewinds and then plays exactly once.
         return p;
       }) };
     }
@@ -45,7 +45,7 @@ function play(kind) {
   try {
     if (p.playing || p.currentTime > 0.01) {
       p.pause();
-      p.seekTo(0).then(() => p.play()).catch(() => { try { p.play(); } catch {} });
+      p.seekTo(0).then(() => { try { p.play(); } catch {} }).catch(() => {});
     } else {
       p.play();
     }

@@ -4,7 +4,7 @@ import { C } from './theme';
 import { hostOf } from './server';
 
 export const GUARDS = [500, 750, 1000, 2000];
-const VERSION = '1.2.1';
+const VERSION = '1.2.3';
 
 /** ⋯ : the account, the same-label wait, sound, the PC, sign out */
 export function Menu({ session, net, guard, onGuard, sound, onSound, pc, pcStatus, onPairPC, onForgetPC, onReconnectPC, onSignIn, onSignOut, onClose }) {
